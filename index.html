@@ -39,8 +39,13 @@
             display: flex;
             justify-content: flex-start; /* Align tables in a row to the start (left) */
             flex-wrap: wrap; /* Allow wrapping within a row if tables are too big for screen */
-            gap: 2rem; /* Gap between tables in a row */
+            gap: 1rem; /* Default gap for smaller screens */
             width: 100%; /* Take full width of parent */
+        }
+        @media (min-width: 640px) { /* Tailwind's sm breakpoint */
+            .table-row-container {
+                gap: 2rem; /* Larger gap for larger screens */
+            }
         }
         .extra-space-after {
             margin-bottom: 2rem; /* Additional space after the second row */
