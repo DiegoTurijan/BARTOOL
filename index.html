@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Asientos para Fiesta</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Fondo azul-gris claro */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            flex-grow: 1;
+        }
+        .table-container {
+            display: flex;
+            flex-wrap: wrap; /* Permite que las mesas se ajusten en pantallas más pequeñas */
+            gap: 2rem;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1rem 0;
+        }
+        .table-card {
+            background-color: #ef4444; /* Color rojo para las mesas */
+            border-radius: 1rem; /* Esquinas redondeadas */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            min-width: 200px; /* Ancho mínimo para las mesas */
+            height: 120px; /* Altura fija para las mesas, haciéndolas rectangulares */
+            flex-basis: calc(50% - 1rem); /* Dos mesas por fila en pantallas medianas */
+        }
+        @media (min-width: 768px) {
+            .table-card {
+                flex-basis: calc(33.333% - 1.333rem); /* Tres mesas por fila en pantallas más grandes */
+            }
+        }
+        @media (min-width: 1024px) {
+            .table-card {
+                flex-basis: calc(25% - 1.5rem); /* Cuatro mesas por fila en pantallas grandes */
+            }
+        }
+
+        .table-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 20px -3px rgba(0, 0, 0, 0.15), 0 6px 8px -2px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Estilos del modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh; /* Limita la altura del modal */
+            overflow-y: auto; /* Habilita el desplazamiento para el contenido */
+            position: relative;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #4b5563;
+        }
+
+        /* Estilos para la representación de la mesa y los asientos dentro del modal */
+        .table-seating-area {
+            position: relative;
+            width: 100%;
+            max-width: 450px; /* Ancho máximo para la zona de asientos */
+            padding-top: 66.66%; /* Relación de aspecto (ej. 450x300 -> 66.66%) */
+            margin: 2rem auto;
+            box-sizing: border-box;
+            background-color: #f8fafc; /* Fondo muy claro para el área de la mesa */
+            border-radius: 1rem;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .modal-table-representation {
+            background-color: #ef4444; /* Rojo para la mesa central */
+            width: 60%; /* Ancho relativo */
+            height: 40%; /* Altura relativa */
+            border-radius: 0.5rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.25rem;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .seat-circle {
+            width: 60px; /* Tamaño fijo para los asientos */
+            height: 60px;
+            background-color: #f3f4f6; /* Gris claro para los asientos */
+            border: 1px solid #d1d5db;
+            border-radius: 50%; /* Circular */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: absolute; /* Posicionamiento absoluto */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            z-index: 2; /* Asegura que los asientos estén sobre la mesa */
+        }
+        .seat-circle label {
+            font-size: 0.65rem; /* Etiqueta más pequeña */
+            color: #6b7280;
+            margin-bottom: 0.1rem;
+            text-align: center;
+            line-height: 1;
+        }
+        .seat-circle input {
+            width: 85%; /* El input ocupa la mayor parte del círculo */
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-size: 0.75rem; /* Fuente más pequeña para el nombre del asiento */
+            padding: 0.1rem;
+            outline: none;
+            border-bottom: 1px dashed #cbd5e0; /* Línea de entrada */
+        }
+        .seat-circle input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Posicionamiento de los asientos (ajustar porcentajes según sea necesario) */
+        /* Nuevo orden: Asiento 1 es el del medio arriba (originalmente seat-wrapper-1) */
+        #seat-wrapper-0 { top: -10%; left: 15%; } /* Originalmente asiento 1, ahora asiento 10 */
+        #seat-wrapper-1 { top: -10%; left: 50%; transform: translateX(-50%); } /* Originalmente asiento 2, ahora asiento 1 (inicio) */
+        #seat-wrapper-2 { top: -10%; right: 15%; } /* Originalmente asiento 3, ahora asiento 2 */
+
+        #seat-wrapper-3 { top: 20%; right: -5%; } /* Originalmente asiento 4, ahora asiento 3 */
+        #seat-wrapper-4 { bottom: 20%; right: -5%; } /* Originalmente asiento 5, ahora asiento 4 */
+
+        #seat-wrapper-5 { bottom: -10%; right: 15%; } /* Originalmente asiento 6, ahora asiento 5 */
+        #seat-wrapper-6 { bottom: -10%; left: 50%; transform: translateX(-50%); } /* Originalmente asiento 7, ahora asiento 6 */
+        #seat-wrapper-7 { bottom: -10%; left: 15%; } /* Originalmente asiento 8, ahora asiento 7 */
+
+        #seat-wrapper-8 { bottom: 20%; left: -5%; } /* Originalmente asiento 9, ahora asiento 8 */
+        #seat-wrapper-9 { top: 20%; left: -5%; } /* Originalmente asiento 10, ahora asiento 9 */
+
+
+        /* El botón primary ya no se usa para exportar individualmente, se mantiene por si se quiere añadir otra función */
+        .button-primary {
+            background-color: #3b82f6; /* Botón azul */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            margin-top: 1.5rem;
+            display: none; /* Oculta el botón individual de exportación */
+        }
+        .button-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+        .button-primary:active {
+            transform: translateY(0);
+        }
+        .add-table-button {
+            background-color: #10b981; /* Botón verde */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            margin-top: 1rem;
+            align-self: center; /* Centra el botón */
+        }
+        .add-table-button:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+        }
+        .add-table-button:active {
+            transform: translateY(0);
+        }
+        .export-all-button {
+            background-color: #f97316; /* Naranja para el botón de exportar todo */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            margin-top: 1.5rem;
+            align-self: center;
+            width: fit-content; /* Ajusta el ancho al contenido */
+        }
+        .export-all-button:hover {
+            background-color: #ea580c;
+            transform: translateY(-1px);
+        }
+        .export-all-button:active {
+            transform: translateY(0);
+        }
+        .export-output {
+            background-color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 2rem;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            white-space: pre-wrap; /* Preserva los espacios en blanco y ajusta el texto */
+            word-break: break-all; /* Rompe palabras largas */
+            font-size: 0.875rem;
+            color: #334155;
+            min-height: 80px; /* Asegura visibilidad incluso si está vacío */
+            overflow-x: auto; /* Permite desplazamiento horizontal para líneas largas */
+        }
+        .header {
+            text-align: center;
+            padding: 1.5rem 0;
+            background-color: #ffffff;
+            border-bottom-left-radius: 1rem;
+            border-bottom-right-radius: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1rem;
+        }
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .header p {
+            font-size: 1rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Organizador de Asientos para Fiesta</h1>
+        <p>Haz clic en una mesa para asignar invitados y exportar el orden de los asientos.</p>
+    </div>
+
+    <div class="container">
+        <div id="tables-container" class="table-container">
+            <!-- Las mesas se añadirán dinámicamente aquí -->
+        </div>
+        <button id="add-table-btn" class="add-table-button">Añadir Nueva Mesa</button>
+
+        <!-- Modal de Asientos -->
+        <div id="seating-modal" class="modal-overlay">
+            <div class="modal-content">
+                <button class="close-button" id="close-modal-btn">&times;</button>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Asientos de la Mesa <span id="current-table-name"></span></h2>
+                <p class="text-gray-600 text-sm mb-4">Introduce los nombres de los invitados. El orden de exportación es de arriba a la derecha, en sentido de las manecillas del reloj.</p>
+
+                <div class="table-seating-area">
+                    <div class="modal-table-representation">Mesa</div>
+                    <!-- Los asientos se renderizarán aquí -->
+                    <div id="seat-wrapper-0" class="seat-circle"></div>
+                    <div id="seat-wrapper-1" class="seat-circle"></div>
+                    <div id="seat-wrapper-2" class="seat-circle"></div>
+                    <div id="seat-wrapper-3" class="seat-circle"></div>
+                    <div id="seat-wrapper-4" class="seat-circle"></div>
+                    <div id="seat-wrapper-5" class="seat-circle"></div>
+                    <div id="seat-wrapper-6" class="seat-circle"></div>
+                    <div id="seat-wrapper-7" class="seat-circle"></div>
+                    <div id="seat-wrapper-8" class="seat-circle"></div>
+                    <div id="seat-wrapper-9" class="seat-circle"></div>
+                </div>
+
+                <!-- El botón de exportación individual ha sido eliminado de aquí -->
+            </div>
+        </div>
+
+        <!-- Sección de Salida de Exportación -->
+        <div class="mt-8 p-4 bg-white rounded-lg shadow-md flex flex-col items-center">
+            <h2 class="text-xl font-bold text-gray-800 mb-3">Orden de Asientos Exportado</h2>
+            <button id="export-all-tables-btn" class="export-all-button mb-4">Exportar Todas las Mesas (150 Elementos)</button>
+            <div id="export-output" class="export-output w-full">
+                <!-- El JSON exportado aparecerá aquí -->
+                <p class="text-gray-500">Haz clic en "Exportar Todas las Mesas" para ver el resultado aquí.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Objeto global para almacenar la disposición de los asientos de todas las mesas
+        // Cada mesa tiene un array de 10 strings para los asientos
+        const partyTables = {};
+        let currentTableId = null; // Para rastrear la mesa que se está editando
+        let tableCounter = 0; // Para generar IDs de mesa únicos
+
+        // Mapeo de la posición física del asiento (índice 0-9 en seat-wrapper)
+        // a su orden lógico en sentido de las manecillas del reloj (1-10)
+        // y luego al índice en el array partyTables
+        // El nuevo Asiento 1 es el que estaba en el índice 1 (top-middle)
+        // El orden de los índices del array partyTables que corresponden al orden lógico 1-10 (clockwise):
+        const logicalSeatOrderToPhysicalIndex = [
+            1, // Logical Seat 1 (top-middle) -> Physical index 1
+            2, // Logical Seat 2 (top-right) -> Physical index 2
+            3, // Logical Seat 3 (right-top) -> Physical index 3
+            4, // Logical Seat 4 (right-bottom) -> Physical index 4
+            5, // Logical Seat 5 (bottom-right) -> Physical index 5
+            6, // Logical Seat 6 (bottom-middle) -> Physical index 6
+            7, // Logical Seat 7 (bottom-left) -> Physical index 7
+            8, // Logical Seat 8 (left-bottom) -> Physical index 8
+            9, // Logical Seat 9 (left-top) -> Physical index 9
+            0  // Logical Seat 10 (top-left) -> Physical index 0
+        ];
+
+        /**
+         * Genera un ID único para una nueva mesa.
+         * @returns {string} El ID único de la mesa.
+         */
+        function generateTableId() {
+            tableCounter++;
+            return `table-${tableCounter}`;
+        }
+
+        /**
+         * Añade una nueva mesa al diseño de la fiesta.
+         */
+        function addNewTable() {
+            const tableId = generateTableId();
+            partyTables[tableId] = Array(10).fill(''); // Inicializa 10 asientos vacíos
+
+            const tablesContainer = document.getElementById('tables-container');
+            const tableCard = document.createElement('div');
+            tableCard.id = tableId;
+            tableCard.className = 'table-card';
+            tableCard.innerHTML = `<span class="text-lg">Mesa ${tableCounter}</span>`;
+            tableCard.addEventListener('click', () => openSeatingModal(tableId));
+            tablesContainer.appendChild(tableCard);
+        }
+
+        /**
+         * Abre el modal de asientos para una mesa específica.
+         * @param {string} tableId - El ID de la mesa a editar.
+         */
+        function openSeatingModal(tableId) {
+            currentTableId = tableId;
+            const modal = document.getElementById('seating-modal');
+            const currentTableNameSpan = document.getElementById('current-table-name');
+
+            // Establece el nombre de la mesa en el título del modal
+            currentTableNameSpan.textContent = tableId.replace('table-', ''); // Muestra solo el número
+
+            // Rellena los campos de entrada de los asientos según el nuevo orden lógico
+            for (let i = 0; i < 10; i++) {
+                // 'i' aquí representa el índice del asiento lógico (0 para el Asiento 1, 1 para el Asiento 2, etc.)
+                const physicalSeatWrapperIndex = logicalSeatOrderToPhysicalIndex[i];
+                const seatWrapper = document.getElementById(`seat-wrapper-${physicalSeatWrapperIndex}`);
+
+                // Limpiar contenido previo por si se había poblado antes
+                seatWrapper.innerHTML = '';
+
+                const label = document.createElement('label');
+                label.htmlFor = `seat-${i + 1}`; // La etiqueta muestra el número de asiento lógico (1-10)
+                label.textContent = `Asiento ${i + 1}`;
+                if (i === 0) { // El primer asiento lógico es el nuevo "inicio"
+                    label.innerHTML += ' <span class="text-green-600 text-xs">(Inicio)</span>';
+                }
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `seat-${i + 1}`;
+                input.placeholder = 'Nombre';
+                // El valor del input se carga desde el partyTables usando el índice físico
+                input.value = partyTables[tableId][physicalSeatWrapperIndex];
+
+                seatWrapper.appendChild(label);
+                seatWrapper.appendChild(input);
+
+                // Añade el listener de eventos para actualizar los datos al cambiar el input
+                // El valor se guarda en partyTables usando el índice físico
+                input.addEventListener('input', (event) => {
+                    partyTables[tableId][physicalSeatWrapperIndex] = event.target.value;
+                });
+            }
+
+            modal.classList.add('active'); // Muestra el modal
+        }
+
+        /**
+         * Cierra el modal de asientos.
+         */
+        function closeSeatingModal() {
+            const modal = document.getElementById('seating-modal');
+            modal.classList.remove('active'); // Oculta el modal
+            currentTableId = null; // Reinicia la mesa actual
+        }
+
+        /**
+         * Exports the seating order for all tables, ensuring 150 elements with " " for empty seats.
+         */
+        function exportAllTablesSeating() {
+            const allSeats = [];
+            // Itera a través de las mesas por su orden numérico (Mesa 1, Mesa 2, etc.)
+            for (let i = 1; i <= tableCounter; i++) {
+                const tableId = `table-${i}`;
+                const seats = partyTables[tableId];
+                if (seats) {
+                    // Itera sobre el orden lógico de los asientos para cada mesa
+                    for (let j = 0; j < 10; j++) {
+                        const physicalIndex = logicalSeatOrderToPhysicalIndex[j];
+                        // Si el asiento está vacío o contiene solo espacios en blanco, representarlo como " "
+                        allSeats.push(seats[physicalIndex].trim() === '' ? ' ' : seats[physicalIndex].trim());
+                    }
+                } else {
+                    // Si una mesa de alguna manera no existe en partyTables (no debería ocurrir con la lógica actual),
+                    // rellenar con 10 espacios vacíos para mantener el recuento de 150.
+                    for (let j = 0; j < 10; j++) {
+                        allSeats.push(' ');
+                    }
+                }
+            }
+
+            const exportOutput = document.getElementById('export-output');
+            exportOutput.textContent = JSON.stringify(allSeats, null, 2); // Imprime el JSON de forma legible
+        }
+
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Añade 15 mesas iniciales
+            for (let i = 0; i < 15; i++) {
+                addNewTable();
+            }
+
+            document.getElementById('add-table-btn').addEventListener('click', addNewTable);
+            document.getElementById('close-modal-btn').addEventListener('click', closeSeatingModal);
+            document.getElementById('seating-modal').addEventListener('click', (event) => {
+                // Cierra el modal si se hace clic fuera del contenido del modal
+                if (event.target.id === 'seating-modal') {
+                    closeSeatingModal();
+                }
+            });
+            // El botón de exportación individual ha sido eliminado, por lo tanto, su listener también
+            // document.getElementById('export-table-btn').addEventListener('click', exportTableSeating);
+            document.getElementById('export-all-tables-btn').addEventListener('click', exportAllTablesSeating);
+        });
+    </script>
+</body>
+</html>
