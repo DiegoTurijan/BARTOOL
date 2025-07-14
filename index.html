@@ -35,6 +35,22 @@
             width: 100%;
             padding: 1rem 0;
         }
+        .stage-area {
+            background-color: #4b5563; /* Dark gray for stage */
+            width: 90%; /* Responsive width */
+            max-width: 800px; /* Max width for stage */
+            height: 120px; /* Fixed height for stage */
+            border-radius: 0.75rem; /* Rounded corners */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem; /* Space below the stage */
+            align-self: center; /* Center the stage */
+        }
         .table-row-container {
             display: flex;
             justify-content: flex-start; /* Align tables in a row to the start (left) */
@@ -51,11 +67,11 @@
             margin-bottom: 2rem; /* Additional space after the second row */
         }
         .table-card {
-            background-color: #ef4444; /* Red color for tables */
+            background-color: #ef4444; /* Default Red color for tables */
             border-radius: 50%; /* Make it circular */
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             cursor: pointer;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease-in-out; /* Add background-color transition */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -67,6 +83,9 @@
             width: 120px; /* Fixed size for circular tables */
             height: 120px; /* Fixed size for circular tables */
             flex-shrink: 0; /* Prevent shrinking below fixed size */
+        }
+        .table-card.filled {
+            background-color: #10b981; /* Green color for filled tables */
         }
         .table-card:hover {
             transform: translateY(-5px);
@@ -367,6 +386,7 @@
 
     <div class="container">
         <div id="tables-container" class="all-tables-wrapper">
+            <div class="stage-area">ESCENARIO</div>
             <div id="row-1-tables" class="table-row-container"></div>
             <div id="row-2-tables" class="table-row-container extra-space-after"></div>
             <div id="row-3-tables" class="table-row-container"></div>
@@ -426,7 +446,7 @@
     <script>
         // Global object to store seating arrangements for all tables
         // Each table has an array of 10 strings for seats
-        let partyTables = {}; // Changed from const to let
+        let partyTables = {};
         let currentTableId = null; // To keep track of the table being edited
         let tableCounter = 0; // To generate unique table IDs
 
@@ -461,17 +481,17 @@
          * @param {Array<string>} [initialSeats] - Optional array of 10 strings to pre-fill seats.
          */
         function addNewTable(initialSeats = Array(10).fill('')) {
-            const tableId = generateTableId();
+            const tableId = `table-${tableCounter + 1}`; // Use tableCounter + 1 for the ID
             partyTables[tableId] = initialSeats;
 
             let targetContainer;
-            if (tableCounter <= 3) { // Tables 1, 2, 3
+            if (tableCounter < 3) { // Tables 1, 2, 3
                 targetContainer = document.getElementById('row-1-tables');
-            } else if (tableCounter <= 8) { // Tables 4, 5, 6, 7, 8
+            } else if (tableCounter < 8) { // Tables 4, 5, 6, 7, 8
                 targetContainer = document.getElementById('row-2-tables');
-            } else if (tableCounter <= 13) { // Tables 9, 10, 11, 12, 13
+            } else if (tableCounter < 13) { // Tables 9, 10, 11, 12, 13
                 targetContainer = document.getElementById('row-3-tables');
-            } else if (tableCounter <= 15) { // Tables 14, 15
+            } else if (tableCounter < 15) { // Tables 14, 15
                 targetContainer = document.getElementById('row-4-tables');
             } else {
                 // For tables added beyond the initial 15
@@ -481,9 +501,12 @@
             const tableCard = document.createElement('div');
             tableCard.id = tableId;
             tableCard.className = 'table-card';
-            tableCard.innerHTML = `<span class="text-lg">Mesa ${tableCounter}</span>`;
+            tableCard.innerHTML = `<span class="text-lg">Mesa ${tableCounter + 1}</span>`; // Display correct table number
             tableCard.addEventListener('click', () => openSeatingModal(tableId));
             targetContainer.appendChild(tableCard);
+
+            updateTableCardColor(tableId); // Update color immediately after adding
+            tableCounter++; // Increment counter after adding the table
         }
 
         /**
@@ -495,6 +518,33 @@
             document.getElementById('row-3-tables').innerHTML = '';
             document.getElementById('row-4-tables').innerHTML = '';
             document.getElementById('additional-tables-row').innerHTML = '';
+        }
+
+        /**
+         * Updates the background color of a table card based on whether it has any guests.
+         * @param {string} tableId - The ID of the table to update.
+         */
+        function updateTableCardColor(tableId) {
+            const tableCard = document.getElementById(tableId);
+            if (!tableCard) return;
+
+            const seats = partyTables[tableId];
+            const hasGuests = seats.some(seat => seat.trim() !== '');
+
+            if (hasGuests) {
+                tableCard.classList.add('filled');
+            } else {
+                tableCard.classList.remove('filled');
+            }
+        }
+
+        /**
+         * Updates the colors of all table cards.
+         */
+        function updateAllTableColors() {
+            for (const tableId in partyTables) {
+                updateTableCardColor(tableId);
+            }
         }
 
         /**
@@ -539,6 +589,7 @@
                 // Value is saved in partyTables using the physical index
                 input.addEventListener('input', (event) => {
                     partyTables[tableId][physicalSeatWrapperIndex] = event.target.value;
+                    updateTableCardColor(tableId); // Update table color when a seat is changed
                 });
             }
 
@@ -623,6 +674,9 @@
 
             const exportOutput = document.getElementById('export-output');
             exportOutput.textContent = JSON.stringify(allSeats, null, 2); // Pretty print JSON
+
+            // Save to local storage
+            localStorage.setItem('partySeatingData', JSON.stringify(allSeats));
         }
 
         /**
@@ -661,9 +715,56 @@
                 showFeedback('Datos importados exitosamente.', 'success', importFeedback);
                 // Update the export output to reflect the newly imported data
                 exportAllTablesSeating();
+                updateAllTableColors(); // Update colors after import
             } catch (e) {
                 console.error("Error al parsear JSON:", e);
                 showFeedback('Error al parsear los datos JSON. Asegúrate de que el formato sea correcto.', 'error', importFeedback);
+            }
+        }
+
+        /**
+         * Loads saved seating data from local storage on page load.
+         */
+        function loadSavedData() {
+            const savedData = localStorage.getItem('partySeatingData');
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+                    if (Array.isArray(parsedData) && parsedData.length === 150) {
+                        // Clear existing tables and data
+                        partyTables = {};
+                        tableCounter = 0;
+                        clearAllTableContainers();
+
+                        // Re-create tables with loaded data
+                        for (let i = 0; i < 15; i++) {
+                            const loadedTableSeats = parsedData.slice(i * 10, (i * 10) + 10);
+                            addNewTable(loadedTableSeats);
+                        }
+                        updateAllTableColors(); // Update colors after loading
+                        exportAllTablesSeating(); // Display loaded data in export output
+                    } else {
+                        console.warn("Datos guardados inválidos o incompletos. Se iniciará con mesas vacías.");
+                        initializeDefaultTables();
+                    }
+                } catch (e) {
+                    console.error("Error al cargar datos de local storage:", e);
+                    initializeDefaultTables();
+                }
+            } else {
+                initializeDefaultTables();
+            }
+        }
+
+        /**
+         * Initializes the default 15 empty tables.
+         */
+        function initializeDefaultTables() {
+            partyTables = {};
+            tableCounter = 0;
+            clearAllTableContainers();
+            for (let i = 0; i < 15; i++) {
+                addNewTable();
             }
         }
 
@@ -671,8 +772,6 @@
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize row containers in the DOM
-            // This is necessary because JS executes after DOM is ready
-            // and elements must exist to be referenced
             const tablesContainerDiv = document.getElementById('tables-container');
             const row1 = document.createElement('div'); row1.id = 'row-1-tables'; row1.className = 'table-row-container';
             const row2 = document.createElement('div'); row2.id = 'row-2-tables'; row2.className = 'table-row-container extra-space-after';
@@ -686,10 +785,8 @@
             tablesContainerDiv.appendChild(row4);
             tablesContainerDiv.appendChild(additionalRow); // For future added tables
 
-            // Add 15 initial tables
-            for (let i = 0; i < 15; i++) {
-                addNewTable();
-            }
+            // Load saved data or initialize default tables
+            loadSavedData();
 
             document.getElementById('add-table-btn').addEventListener('click', addNewTable);
             document.getElementById('close-modal-btn').addEventListener('click', closeSeatingModal);
