@@ -707,9 +707,15 @@
 
                 // Re-create tables and populate with imported data
                 for (let i = 0; i < 15; i++) {
-                    const importedTableSeats = parsedData.slice(i * 10, (i * 10) + 10);
-                    // addNewTable increments tableCounter and creates the DOM element
-                    addNewTable(importedTableSeats);
+                    const importedLogicalSeats = parsedData.slice(i * 10, (i * 10) + 10);
+                    const physicallyOrderedSeats = Array(10).fill(''); // Create empty array for physical order
+
+                    // Map logical order from imported data to physical order for partyTables
+                    for (let j = 0; j < 10; j++) {
+                        const physicalIndex = logicalSeatOrderToPhysicalIndex[j]; // Get the physical index for logical seat (j+1)
+                        physicallyOrderedSeats[physicalIndex] = importedLogicalSeats[j]; // Assign the guest from logical order to physical position
+                    }
+                    addNewTable(physicallyOrderedSeats); // Pass the physically ordered seats
                 }
 
                 showFeedback('Datos importados exitosamente.', 'success', importFeedback);
@@ -738,8 +744,13 @@
 
                         // Re-create tables with loaded data
                         for (let i = 0; i < 15; i++) {
-                            const loadedTableSeats = parsedData.slice(i * 10, (i * 10) + 10);
-                            addNewTable(loadedTableSeats);
+                            const loadedLogicalSeats = parsedData.slice(i * 10, (i * 10) + 10);
+                            const physicallyOrderedSeats = Array(10).fill('');
+                            for (let j = 0; j < 10; j++) {
+                                const physicalIndex = logicalSeatOrderToPhysicalIndex[j];
+                                physicallyOrderedSeats[physicalIndex] = loadedLogicalSeats[j];
+                            }
+                            addNewTable(physicallyOrderedSeats);
                         }
                         updateAllTableColors(); // Update colors after loading
                         exportAllTablesSeating(); // Display loaded data in export output
