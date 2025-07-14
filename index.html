@@ -248,7 +248,7 @@
         .add-table-button:active {
             transform: translateY(0);
         }
-        .export-all-button {
+        .export-all-button, .copy-button, .import-button {
             background-color: #f97316; /* Orange for export all button */
             color: white;
             padding: 0.75rem 1.5rem;
@@ -258,22 +258,35 @@
             font-size: 1rem;
             font-weight: 600;
             transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            margin-top: 1.5rem;
-            align-self: flex-start; /* Align button to the left */
             width: fit-content; /* Adjust width to content */
         }
-        .export-all-button:hover {
+        .export-all-button:hover, .copy-button:hover, .import-button:hover {
             background-color: #ea580c;
             transform: translateY(-1px);
         }
-        .export-all-button:active {
+        .export-all-button:active, .copy-button:active, .import-button:active {
             transform: translateY(0);
+        }
+        .copy-button {
+            background-color: #8b5cf6; /* Purple for copy button */
+            margin-left: 1rem; /* Space from export button */
+        }
+        .copy-button:hover {
+            background-color: #7c3aed;
+        }
+        .import-button {
+            background-color: #06b6d4; /* Cyan for import button */
+            margin-left: 1rem; /* Space from textarea */
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .import-button:hover {
+            background-color: #0891b2;
         }
         .export-output {
             background-color: #e2e8f0;
             padding: 1rem;
             border-radius: 0.5rem;
-            margin-top: 2rem;
+            margin-top: 1rem; /* Adjusted margin */
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
             white-space: pre-wrap; /* Preserve whitespace and wrap text */
             word-break: break-all; /* Break long words */
@@ -301,6 +314,48 @@
             font-size: 1rem;
             color: #6b7280;
             margin-top: 0.5rem;
+        }
+        .import-section {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin-top: 1.5rem;
+            gap: 0.5rem;
+        }
+        .import-section label {
+            font-size: 0.875rem;
+            color: #4b5563;
+            margin-bottom: 0.25rem;
+        }
+        .import-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+        .import-input-group textarea {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            min-height: 100px;
+            resize: vertical; /* Allow vertical resizing */
+            outline: none;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .import-input-group textarea:focus {
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+        }
+        .feedback-message {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #16a34a; /* Green for success */
+            text-align: left;
+            width: 100%;
+        }
+        .feedback-message.error {
+            color: #dc2626; /* Red for error */
         }
     </style>
 </head>
@@ -341,18 +396,29 @@
                     <div id="seat-wrapper-8" class="seat-circle"></div>
                     <div id="seat-wrapper-9" class="seat-circle"></div>
                 </div>
-
-                <!-- The individual export button has been removed from here -->
             </div>
         </div>
 
         <!-- Export Output Section -->
-        <div class="mt-8 p-4 bg-white rounded-lg shadow-md flex flex-col items-start">
+        <div class="mt-8 p-4 bg-white rounded-lg shadow-md flex flex-col items-start w-full">
             <h2 class="text-xl font-bold text-gray-800 mb-3">Orden de Asientos Exportado</h2>
-            <button id="export-all-tables-btn" class="export-all-button mb-4">Exportar Todas las Mesas (150 Elementos)</button>
+            <div class="flex items-center mb-2">
+                <button id="export-all-tables-btn" class="export-all-button">Exportar Todas las Mesas (150 Elementos)</button>
+                <button id="copy-export-btn" class="copy-button">Copiar Orden Exportado</button>
+            </div>
+            <div id="copy-feedback" class="feedback-message hidden"></div>
             <div id="export-output" class="export-output w-full">
                 <!-- Exported JSON will appear here -->
                 <p class="text-gray-500">Haz clic en "Exportar Todas las Mesas" para ver el resultado aquí.</p>
+            </div>
+
+            <div class="import-section">
+                <label for="import-input" class="font-semibold">Pegar datos para importar:</label>
+                <div class="import-input-group">
+                    <textarea id="import-input" placeholder="Pega aquí el JSON exportado (ej: [&quot;Invitado 1&quot;, &quot;Invitado 2&quot;, ...])"></textarea>
+                    <button id="import-btn" class="import-button">Importar Datos</button>
+                </div>
+                <div id="import-feedback" class="feedback-message hidden"></div>
             </div>
         </div>
     </div>
@@ -360,7 +426,7 @@
     <script>
         // Global object to store seating arrangements for all tables
         // Each table has an array of 10 strings for seats
-        const partyTables = {};
+        let partyTables = {}; // Changed from const to let
         let currentTableId = null; // To keep track of the table being edited
         let tableCounter = 0; // To generate unique table IDs
 
@@ -392,10 +458,11 @@
 
         /**
          * Adds a new table to the party layout.
+         * @param {Array<string>} [initialSeats] - Optional array of 10 strings to pre-fill seats.
          */
-        function addNewTable() {
+        function addNewTable(initialSeats = Array(10).fill('')) {
             const tableId = generateTableId();
-            partyTables[tableId] = Array(10).fill(''); // Initialize 10 empty seats
+            partyTables[tableId] = initialSeats;
 
             let targetContainer;
             if (tableCounter <= 3) { // Tables 1, 2, 3
@@ -417,6 +484,17 @@
             tableCard.innerHTML = `<span class="text-lg">Mesa ${tableCounter}</span>`;
             tableCard.addEventListener('click', () => openSeatingModal(tableId));
             targetContainer.appendChild(tableCard);
+        }
+
+        /**
+         * Clears all table containers in the DOM.
+         */
+        function clearAllTableContainers() {
+            document.getElementById('row-1-tables').innerHTML = '';
+            document.getElementById('row-2-tables').innerHTML = '';
+            document.getElementById('row-3-tables').innerHTML = '';
+            document.getElementById('row-4-tables').innerHTML = '';
+            document.getElementById('additional-tables-row').innerHTML = '';
         }
 
         /**
@@ -477,6 +555,48 @@
         }
 
         /**
+         * Displays a feedback message to the user.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success' or 'error'.
+         * @param {HTMLElement} element - The HTML element to display the message in.
+         */
+        function showFeedback(message, type, element) {
+            element.textContent = message;
+            element.classList.remove('hidden', 'text-green-600', 'text-red-600');
+            element.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
+            setTimeout(() => {
+                element.classList.add('hidden');
+            }, 3000);
+        }
+
+        /**
+         * Copies the content of the export output to the clipboard.
+         */
+        function copyExportOutput() {
+            const exportOutput = document.getElementById('export-output');
+            const feedbackElement = document.getElementById('copy-feedback');
+            if (exportOutput.textContent.trim() === '' || exportOutput.textContent.trim() === 'Haz clic en "Exportar Todas las Mesas" para ver el resultado aquí.') {
+                showFeedback('No hay datos para copiar.', 'error', feedbackElement);
+                return;
+            }
+
+            // Use a temporary textarea to copy content
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = exportOutput.textContent;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            try {
+                document.execCommand('copy');
+                showFeedback('¡Copiado!', 'success', feedbackElement);
+            } catch (err) {
+                console.error('Error al copiar:', err);
+                showFeedback('Error al copiar. Intenta copiar manualmente.', 'error', feedbackElement);
+            } finally {
+                document.body.removeChild(tempTextArea);
+            }
+        }
+
+        /**
          * Exports the seating order for all tables, ensuring 150 elements with " " for empty seats.
          */
         function exportAllTablesSeating() {
@@ -503,6 +623,48 @@
 
             const exportOutput = document.getElementById('export-output');
             exportOutput.textContent = JSON.stringify(allSeats, null, 2); // Pretty print JSON
+        }
+
+        /**
+         * Imports seating data from the provided JSON string.
+         */
+        function importData() {
+            const importInput = document.getElementById('import-input');
+            const importFeedback = document.getElementById('import-feedback');
+            const jsonString = importInput.value.trim();
+
+            if (!jsonString) {
+                showFeedback('El campo de importación está vacío.', 'error', importFeedback);
+                return;
+            }
+
+            try {
+                const parsedData = JSON.parse(jsonString);
+
+                if (!Array.isArray(parsedData) || parsedData.length !== 150) {
+                    showFeedback('Formato de datos inválido. Se espera un array con 150 elementos.', 'error', importFeedback);
+                    return;
+                }
+
+                // Clear existing tables and data
+                partyTables = {}; // Reset the object
+                tableCounter = 0; // Reset counter
+                clearAllTableContainers(); // Clear DOM elements
+
+                // Re-create tables and populate with imported data
+                for (let i = 0; i < 15; i++) {
+                    const importedTableSeats = parsedData.slice(i * 10, (i * 10) + 10);
+                    // addNewTable increments tableCounter and creates the DOM element
+                    addNewTable(importedTableSeats);
+                }
+
+                showFeedback('Datos importados exitosamente.', 'success', importFeedback);
+                // Update the export output to reflect the newly imported data
+                exportAllTablesSeating();
+            } catch (e) {
+                console.error("Error al parsear JSON:", e);
+                showFeedback('Error al parsear los datos JSON. Asegúrate de que el formato sea correcto.', 'error', importFeedback);
+            }
         }
 
 
@@ -538,6 +700,8 @@
                 }
             });
             document.getElementById('export-all-tables-btn').addEventListener('click', exportAllTablesSeating);
+            document.getElementById('copy-export-btn').addEventListener('click', copyExportOutput);
+            document.getElementById('import-btn').addEventListener('click', importData);
         });
     </script>
 </body>
