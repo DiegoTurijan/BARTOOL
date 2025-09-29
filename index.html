@@ -3,34 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Cifrado Móvil</title>
+    <title>QR Cifrado | Efecto "Verde a Negro"</title>
     
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
-        /* Estilos generales y Modo Oscuro */
+        /* Estilos generales y Modo Oscuro (se mantiene para la interfaz, pero el QR será blanco) */
         body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            background-color: #1e1e1e;
+            background-color: #1e1e1e; /* Fondo oscuro de la app */
             color: #f0f0f0;
-            transition: background-color 0.5s, color 0.5s;
-            margin: 0; /* Elimina márgenes por defecto del body */
-            width: 100vw; /* Asegura el ancho total de la pantalla */
+            margin: 0;
+            width: 100vw;
         }
         h1 {
             color: #4CAF50;
             text-align: center;
-            font-size: 1.5em; /* Tamaño de fuente amigable para móviles */
+            font-size: 1.5em;
         }
         #controls {
             margin-bottom: 20px;
             display: flex;
-            flex-direction: column; /* Apila elementos verticalmente en móvil */
+            flex-direction: column;
             gap: 10px;
-            width: 90%; /* Ancho de los controles */
+            width: 90%;
             max-width: 400px;
         }
         input[type="text"] {
@@ -40,7 +39,7 @@
             border: 1px solid #444;
             background-color: #333;
             color: #f0f0f0;
-            border-radius: 8px; /* Bordes más suaves */
+            border-radius: 8px;
         }
         button {
             padding: 12px 18px;
@@ -64,21 +63,20 @@
             font-size: 0.9em;
         }
 
-        /* Contenedor del QR: ocupa el 75% del ancho de la pantalla */
+        /* Contenedor del QR: ocupará el 75% del ancho de la pantalla */
         #qr-canvas-container {
-            width: 75vw; /* 75% del ancho del viewport */
-            height: 75vw; /* Mantiene la proporción cuadrada */
-            max-width: 400px; /* Límite para pantallas grandes */
+            width: 75vw; 
+            height: 75vw; 
+            max-width: 400px;
             max-height: 400px;
             
             margin-top: 20px;
             padding: 15px;
             border: 2px solid #555;
-            background-color: #000;
+            background-color: #ffffff; /* Fondo BLANCO para la zona del QR */
             border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); 
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); /* Sombra luminosa verde */
 
-            /* Asegura que el canvas se estire para llenar el contenedor */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -108,9 +106,10 @@
     </div>
 
     <script>
-        // Clave de desplazamiento y configuración de animación
+        // Clave de cifrado y configuración de animación
         const CLAVE = [9, 1, 8, 0, 1, 0, 2, 1];
-        const ANIMATION_DELAY = 5; // Retraso reducido para una animación más rápida en móvil
+        const ANIMATION_DELAY = 1;      // Retraso entre cada módulo
+        const COLOR_FLASH_DELAY = 50;  // Tiempo de espera para el cambio de color (verde a negro)
 
         let animationTimeoutId; 
 
@@ -127,24 +126,42 @@
         }
 
         /**
-         * Anima la construcción del código QR módulo por módulo en el canvas.
-         * Se determina el tamaño de la celda dinámicamente para llenar el 100% del contenedor.
+         * Dibuja un módulo con un efecto de transición de color.
+         * @param {CanvasRenderingContext2D} ctx El contexto 2D.
+         * @param {number} x Coordenada X del módulo.
+         * @param {number} y Coordenada Y del módulo.
+         * @param {number} cellSize Tamaño de la celda.
          */
+        function drawAnimatedModule(ctx, x, y, cellSize) {
+            const X_POS = x * cellSize;
+            const Y_POS = y * cellSize;
+            
+            // 1. Dibuja el píxel con color verde brillante (efecto "flash")
+            ctx.fillStyle = '#00FF00'; 
+            ctx.fillRect(X_POS, Y_POS, cellSize, cellSize);
+
+            // 2. Programa el cambio a negro después de un breve retraso
+            setTimeout(() => {
+                ctx.fillStyle = '#000000'; // Color final: Negro
+                ctx.fillRect(X_POS, Y_POS, cellSize, cellSize);
+            }, COLOR_FLASH_DELAY);
+        }
+
+        /** Anima la construcción del código QR módulo por módulo en el canvas. */
         function animateQrConstruction(pattern, ctx, canvas) {
             clearTimeout(animationTimeoutId); 
 
             const qrSize = pattern.length;
             
-            // Usamos el tamaño físico del canvas para dibujar (necesario para el dibujo)
-            // y lo ajustamos para que ocupe todo el contenedor.
             const containerSize = canvas.parentElement.offsetWidth;
             canvas.width = containerSize;
             canvas.height = containerSize;
 
-            const CELL_SIZE = containerSize / qrSize; // Tamaño de celda dinámico
+            const CELL_SIZE = containerSize / qrSize; 
 
+            // **Paso clave:** El canvas se pinta completamente de blanco
             ctx.fillStyle = '#ffffff'; 
-            ctx.fillRect(0, 0, containerSize, containerSize); // Pinta el fondo del QR de blanco
+            ctx.fillRect(0, 0, containerSize, containerSize); 
 
             let currentModuleIndex = 0;
             const totalModules = qrSize * qrSize;
@@ -155,10 +172,11 @@
                 const y = Math.floor(currentModuleIndex / qrSize);
                 const x = currentModuleIndex % qrSize;
 
-                const color = pattern[y][x] ? '#000000' : '#ffffff'; 
-                
-                ctx.fillStyle = color;
-                ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                // Solo actuamos sobre los píxeles NEGROS (true en el patrón)
+                if (pattern[y][x]) {
+                    drawAnimatedModule(ctx, x, y, CELL_SIZE);
+                } 
+                // Los píxeles blancos (false en el patrón) se omiten, ya que el fondo ya es blanco.
 
                 currentModuleIndex++;
                 animationTimeoutId = setTimeout(drawNextModule, ANIMATION_DELAY);
@@ -178,7 +196,9 @@
             if (numStr.length !== 8 || !/^\d{8}$/.test(numStr)) {
                 alert("Por favor, ingresa un número exacto de 8 dígitos.");
                 resultadoCifradoElement.textContent = "";
-                ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height); 
+                // Limpia y pinta el canvas de blanco si hay error
+                ctx.fillStyle = '#ffffff'; 
+                ctx.fillRect(0, 0, qrCanvas.width, qrCanvas.height); 
                 clearTimeout(animationTimeoutId);
                 return;
             }
@@ -187,7 +207,6 @@
             resultadoCifradoElement.textContent = `Original: ${numStr} → Cifrado: ${numeroCifrado}`;
 
             // 1. Generar el patrón del QR (matriz de booleanos)
-            // Se usa un div dummy para obtener el patrón de la librería sin renderizar
             const qr = new QRCode(document.createElement('div'), {
                 text: numeroCifrado,
                 width: 1, 
@@ -200,19 +219,21 @@
             animateQrConstruction(pattern, ctx, qrCanvas);
         }
 
-        // Inicializar el canvas al cargar y reajustar al cambiar tamaño de ventana
+        // Inicializar el canvas y reajustar al cambiar tamaño de ventana
         function setupCanvas() {
             const qrCanvas = document.getElementById("qrCanvas");
             const containerSize = qrCanvas.parentElement.offsetWidth;
             qrCanvas.width = containerSize;
             qrCanvas.height = containerSize;
             const ctx = qrCanvas.getContext("2d");
-            ctx.fillStyle = '#1e1e1e';
+            
+            // Pinta el canvas de blanco para el estado inicial
+            ctx.fillStyle = '#ffffff'; 
             ctx.fillRect(0, 0, containerSize, containerSize);
         }
 
         window.onload = setupCanvas;
-        window.onresize = setupCanvas; // Vuelve a ajustar si el usuario rota el móvil o cambia el tamaño
+        window.onresize = setupCanvas; 
     </script>
 
 </body>
