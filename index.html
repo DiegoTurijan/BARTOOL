@@ -3,814 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organizador de Asientos para Fiesta</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>QR Cifrado Móvil</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
+        /* Estilos generales y Modo Oscuro */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8; /* Light blue-gray background */
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            margin: 0;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            flex-grow: 1;
-            display: flex; /* Make container a flex column to stack header, tables, and export section */
-            flex-direction: column;
-            /* Removed align-items: center; to allow content to align left */
-        }
-        .all-tables-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start; /* Align rows to the start (left) */
-            gap: 2rem; /* Gap between rows */
-            width: 100%;
-            padding: 1rem 0;
-        }
-        .stage-area {
-            background-color: #4b5563; /* Dark gray for stage */
-            width: 90%; /* Responsive width */
-            max-width: 800px; /* Max width for stage */
-            height: 120px; /* Fixed height for stage */
-            border-radius: 0.75rem; /* Rounded corners */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: center;
             align-items: center;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 2rem; /* Space below the stage */
-            align-self: center; /* Center the stage */
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            transition: background-color 0.5s, color 0.5s;
+            margin: 0; /* Elimina márgenes por defecto del body */
+            width: 100vw; /* Asegura el ancho total de la pantalla */
         }
-        .table-row-container {
-            display: flex;
-            justify-content: flex-start; /* Align tables in a row to the start (left) */
-            flex-wrap: wrap; /* Allow wrapping within a row if tables are too big for screen */
-            gap: 1rem; /* Default gap for smaller screens */
-            width: 100%; /* Take full width of parent */
-        }
-        @media (min-width: 640px) { /* Tailwind's sm breakpoint */
-            .table-row-container {
-                gap: 2rem; /* Larger gap for larger screens */
-            }
-        }
-        .extra-space-after {
-            margin-bottom: 2rem; /* Additional space after the second row */
-        }
-        .table-card {
-            background-color: #ef4444; /* Default Red color for tables */
-            border-radius: 50%; /* Make it circular */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            cursor: pointer;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease-in-out; /* Add background-color transition */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 0; /* Remove padding to make it a tighter circle */
-            color: white;
-            font-weight: 600;
+        h1 {
+            color: #4CAF50;
             text-align: center;
-            width: 120px; /* Fixed size for circular tables */
-            height: 120px; /* Fixed size for circular tables */
-            flex-shrink: 0; /* Prevent shrinking below fixed size */
+            font-size: 1.5em; /* Tamaño de fuente amigable para móviles */
         }
-        .table-card.filled {
-            background-color: #10b981; /* Green color for filled tables */
+        #controls {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column; /* Apila elementos verticalmente en móvil */
+            gap: 10px;
+            width: 90%; /* Ancho de los controles */
+            max-width: 400px;
         }
-        .table-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 20px -3px rgba(0, 0, 0, 0.15), 0 6px 8px -2px rgba(0, 0, 0, 0.08);
+        input[type="text"] {
+            padding: 12px;
+            font-size: 1em;
+            text-align: center;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #f0f0f0;
+            border-radius: 8px; /* Bordes más suaves */
+        }
+        button {
+            padding: 12px 18px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #resultadoCifrado {
+            font-weight: bold;
+            margin: 15px 0;
+            color: #88ccff;
+            text-align: center;
+            padding: 0 10px;
+            font-size: 0.9em;
         }
 
-        /* Modal styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* Contenedor del QR: ocupa el 75% del ancho de la pantalla */
+        #qr-canvas-container {
+            width: 75vw; /* 75% del ancho del viewport */
+            height: 75vw; /* Mantiene la proporción cuadrada */
+            max-width: 400px; /* Límite para pantallas grandes */
+            max-height: 400px;
+            
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid #555;
+            background-color: #000;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); 
+
+            /* Asegura que el canvas se estire para llenar el contenedor */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Estilo para el canvas dentro del contenedor */
+        #qrCanvas {
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh; /* Limit modal height */
-            overflow-y: auto; /* Enable scrolling for content */
-            position: relative;
-            transform: translateY(20px);
-            opacity: 0;
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-        }
-        .modal-overlay.active .modal-content {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        .close-button {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #4b5563;
-        }
-
-        /* Styles for table and seat representation inside the modal */
-        .table-seating-area {
-            position: relative;
-            width: 100%;
-            max-width: 450px; /* Max width for seating area */
-            padding-top: 66.66%; /* Aspect ratio (e.g., 450x300 -> 66.66%) */
-            margin: 2rem auto;
-            box-sizing: border-box;
-            background-color: #f8fafc; /* Very light background for table area */
-            border-radius: 1rem;
-            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .modal-table-representation {
-            background-color: #ef4444; /* Red for the central table */
-            width: 60%; /* Relative width */
-            height: 40%; /* Relative height */
-            border-radius: 0.5rem;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.25rem;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .seat-circle {
-            width: 60px; /* Fixed size for seats */
-            height: 60px;
-            background-color: #f3f4f6; /* Light gray for seats */
-            border: 1px solid #d1d5db;
-            border-radius: 50%; /* Circular */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: absolute; /* Absolute positioning */
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            z-index: 2; /* Ensure seats are above the table */
-        }
-        .seat-circle label {
-            font-size: 0.65rem; /* Smaller label */
-            color: #6b7280;
-            margin-bottom: 0.1rem;
-            text-align: center;
-            line-height: 1;
-        }
-        .seat-circle input {
-            width: 85%; /* Input takes most of the circle */
-            text-align: center;
-            border: none;
-            background: transparent;
-            font-size: 0.75rem; /* Smaller font for seat name */
-            padding: 0.1rem;
-            outline: none;
-            border-bottom: 1px dashed #cbd5e0; /* Input line */
-        }
-        .seat-circle input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
-        }
-
-        /* Seat positioning (adjust percentages as needed) */
-        /* New order: Seat 1 is the top-middle one (originally seat-wrapper-1) */
-        #seat-wrapper-0 { top: -10%; left: 15%; } /* Originally seat 1, now seat 10 */
-        #seat-wrapper-1 { top: -10%; left: 50%; transform: translateX(-50%); } /* Originally seat 2, now seat 1 (start) */
-        #seat-wrapper-2 { top: -10%; right: 15%; } /* Originally seat 3, now seat 2 */
-
-        #seat-wrapper-3 { top: 20%; right: -5%; } /* Originally seat 4, now seat 3 */
-        #seat-wrapper-4 { bottom: 20%; right: -5%; } /* Originally seat 5, now seat 4 */
-
-        #seat-wrapper-5 { bottom: -10%; right: 15%; } /* Originally seat 6, now seat 5 */
-        #seat-wrapper-6 { bottom: -10%; left: 50%; transform: translateX(-50%); } /* Originally seat 7, now seat 6 */
-        #seat-wrapper-7 { bottom: -10%; left: 15%; } /* Originally seat 8, now seat 7 */
-
-        #seat-wrapper-8 { bottom: 20%; left: -5%; } /* Originally seat 9, now seat 8 */
-        #seat-wrapper-9 { top: 20%; left: -5%; } /* Originally seat 10, now seat 9 */
-
-
-        /* The primary button is no longer used for individual export, kept in case another function is added */
-        .button-primary {
-            background-color: #3b82f6; /* Blue button */
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            margin-top: 1.5rem;
-            display: none; /* Hide individual export button */
-        }
-        .button-primary:hover {
-            background-color: #2563eb;
-            transform: translateY(-1px);
-        }
-        .button-primary:active {
-            transform: translateY(0);
-        }
-        .add-table-button {
-            background-color: #10b981; /* Green button */
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            margin-top: 1rem;
-            align-self: flex-start; /* Align button to the left */
-        }
-        .add-table-button:hover {
-            background-color: #059669;
-            transform: translateY(-1px);
-        }
-        .add-table-button:active {
-            transform: translateY(0);
-        }
-        .export-all-button, .copy-button, .import-button {
-            background-color: #f97316; /* Orange for export all button */
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            width: fit-content; /* Adjust width to content */
-        }
-        .export-all-button:hover, .copy-button:hover, .import-button:hover {
-            background-color: #ea580c;
-            transform: translateY(-1px);
-        }
-        .export-all-button:active, .copy-button:active, .import-button:active {
-            transform: translateY(0);
-        }
-        .copy-button {
-            background-color: #8b5cf6; /* Purple for copy button */
-            margin-left: 1rem; /* Space from export button */
-        }
-        .copy-button:hover {
-            background-color: #7c3aed;
-        }
-        .import-button {
-            background-color: #06b6d4; /* Cyan for import button */
-            margin-left: 1rem; /* Space from textarea */
-            flex-shrink: 0; /* Prevent shrinking */
-        }
-        .import-button:hover {
-            background-color: #0891b2;
-        }
-        .export-output {
-            background-color: #e2e8f0;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem; /* Adjusted margin */
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-            white-space: pre-wrap; /* Preserve whitespace and wrap text */
-            word-break: break-all; /* Break long words */
-            font-size: 0.875rem;
-            color: #334155;
-            min-height: 80px; /* Ensure visibility even if empty */
-            overflow-x: auto; /* Allow horizontal scrolling for long lines */
-            align-self: flex-start; /* Align output to the left */
-        }
-        .header {
-            text-align: center;
-            padding: 1.5rem 0;
-            background-color: #ffffff;
-            border-bottom-left-radius: 1rem;
-            border-bottom-right-radius: 1rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            margin-bottom: 1rem;
-        }
-        .header h1 {
-            font-size: 2.25rem;
-            font-weight: 700;
-            color: #1f2937;
-        }
-        .header p {
-            font-size: 1rem;
-            color: #6b7280;
-            margin-top: 0.5rem;
-        }
-        .import-section {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            margin-top: 1.5rem;
-            gap: 0.5rem;
-        }
-        .import-section label {
-            font-size: 0.875rem;
-            color: #4b5563;
-            margin-bottom: 0.25rem;
-        }
-        .import-input-group {
-            display: flex;
-            gap: 0.5rem;
-            align-items: flex-end;
-        }
-        .import-input-group textarea {
-            flex-grow: 1;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            min-height: 100px;
-            resize: vertical; /* Allow vertical resizing */
-            outline: none;
-            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        .import-input-group textarea:focus {
-            border-color: #06b6d4;
-            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
-        }
-        .feedback-message {
-            margin-top: 0.5rem;
-            font-size: 0.875rem;
-            color: #16a34a; /* Green for success */
-            text-align: left;
-            width: 100%;
-        }
-        .feedback-message.error {
-            color: #dc2626; /* Red for error */
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Organizador de Asientos para Fiesta</h1>
-        <p>Haz clic en una mesa para asignar invitados y exportar el orden de los asientos.</p>
+
+    <h1>Generador QR Cifrado Animado</h1>
+
+    <div id="controls">
+        <input type="text" id="numeroOriginal" maxlength="8" placeholder="Ingresa 8 dígitos (Ej: 25221231)" required>
+        <button onclick="generarCifradoYQR()">Generar QR Animado</button>
     </div>
 
-    <div class="container">
-        <div id="tables-container" class="all-tables-wrapper">
-            <div class="stage-area">ESCENARIO</div>
-            <div id="row-1-tables" class="table-row-container"></div>
-            <div id="row-2-tables" class="table-row-container extra-space-after"></div>
-            <div id="row-3-tables" class="table-row-container"></div>
-            <div id="row-4-tables" class="table-row-container"></div>
-            <div id="additional-tables-row" class="table-row-container"></div>
-        </div>
-        <button id="add-table-btn" class="add-table-button">Añadir Nueva Mesa</button>
+    <p id="resultadoCifrado"></p>
 
-        <!-- Seating Modal -->
-        <div id="seating-modal" class="modal-overlay">
-            <div class="modal-content">
-                <button class="close-button" id="close-modal-btn">&times;</button>
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Asientos de la Mesa <span id="current-table-name"></span></h2>
-                <p class="text-gray-600 text-sm mb-4">Introduce los nombres de los invitados. El orden de exportación es de arriba a la derecha, en sentido de las manecillas del reloj.</p>
-
-                <div class="table-seating-area">
-                    <div class="modal-table-representation">Mesa</div>
-                    <!-- Seats will be rendered here -->
-                    <div id="seat-wrapper-0" class="seat-circle"></div>
-                    <div id="seat-wrapper-1" class="seat-circle"></div>
-                    <div id="seat-wrapper-2" class="seat-circle"></div>
-                    <div id="seat-wrapper-3" class="seat-circle"></div>
-                    <div id="seat-wrapper-4" class="seat-circle"></div>
-                    <div id="seat-wrapper-5" class="seat-circle"></div>
-                    <div id="seat-wrapper-6" class="seat-circle"></div>
-                    <div id="seat-wrapper-7" class="seat-circle"></div>
-                    <div id="seat-wrapper-8" class="seat-circle"></div>
-                    <div id="seat-wrapper-9" class="seat-circle"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Export Output Section -->
-        <div class="mt-8 p-4 bg-white rounded-lg shadow-md flex flex-col items-start w-full">
-            <h2 class="text-xl font-bold text-gray-800 mb-3">Orden de Asientos Exportado</h2>
-            <div class="flex items-center mb-2">
-                <button id="export-all-tables-btn" class="export-all-button">Exportar Todas las Mesas (150 Elementos)</button>
-                <button id="copy-export-btn" class="copy-button">Copiar Orden Exportado</button>
-            </div>
-            <div id="copy-feedback" class="feedback-message hidden"></div>
-            <div id="export-output" class="export-output w-full">
-                <!-- Exported JSON will appear here -->
-                <p class="text-gray-500">Haz clic en "Exportar Todas las Mesas" para ver el resultado aquí.</p>
-            </div>
-
-            <div class="import-section">
-                <label for="import-input" class="font-semibold">Pegar datos para importar:</label>
-                <div class="import-input-group">
-                    <textarea id="import-input" placeholder="Pega aquí el JSON exportado (ej: [&quot;Invitado 1&quot;, &quot;Invitado 2&quot;, ...])"></textarea>
-                    <button id="import-btn" class="import-button">Importar Datos</button>
-                </div>
-                <div id="import-feedback" class="feedback-message hidden"></div>
-            </div>
-        </div>
+    <div id="qr-canvas-container">
+        <canvas id="qrCanvas"></canvas>
     </div>
 
     <script>
-        // Global object to store seating arrangements for all tables
-        // Each table has an array of 10 strings for seats
-        let partyTables = {};
-        let currentTableId = null; // To keep track of the table being edited
-        let tableCounter = 0; // To generate unique table IDs
+        // Clave de desplazamiento y configuración de animación
+        const CLAVE = [9, 1, 8, 0, 1, 0, 2, 1];
+        const ANIMATION_DELAY = 5; // Retraso reducido para una animación más rápida en móvil
 
-        // Mapping of physical seat position (0-9 index in seat-wrapper)
-        // to its logical clockwise order (1-10)
-        // The new Logical Seat 1 is the one that was at physical index 1 (top-middle)
-        // The order of partyTables array indices that correspond to logical order 1-10 (clockwise):
-        const logicalSeatOrderToPhysicalIndex = [
-            1, // Logical Seat 1 (top-middle) -> Physical index 1
-            2, // Logical Seat 2 (top-right) -> Physical index 2
-            3, // Logical Seat 3 (right-top) -> Physical index 3
-            4, // Logical Seat 4 (right-bottom) -> Physical index 4
-            5, // Logical Seat 5 (bottom-right) -> Physical index 5
-            6, // Logical Seat 6 (bottom-middle) -> Physical index 6
-            7, // Logical Seat 7 (bottom-left) -> Physical index 7
-            8, // Logical Seat 8 (left-bottom) -> Physical index 8
-            9, // Logical Seat 9 (left-top) -> Physical index 9
-            0  // Logical Seat 10 (top-left) -> Physical index 0
-        ];
+        let animationTimeoutId; 
 
-        /**
-         * Generates a unique ID for a new table.
-         * @returns {string} The unique table ID.
-         */
-        function generateTableId() {
-            tableCounter++;
-            return `table-${tableCounter}`;
+        /** Cifra el número usando el desplazamiento aditivo módulo 10. */
+        function cifrarNumero(numero) {
+            let numeroCifrado = "";
+            for (let i = 0; i < 8; i++) {
+                const digitoOriginal = parseInt(numero[i]);
+                const claveDigito = CLAVE[i];
+                const digitoCifrado = (digitoOriginal + claveDigito) % 10;
+                numeroCifrado += digitoCifrado.toString();
+            }
+            return numeroCifrado;
         }
 
         /**
-         * Adds a new table to the party layout.
-         * @param {Array<string>} [initialSeats] - Optional array of 10 strings to pre-fill seats.
+         * Anima la construcción del código QR módulo por módulo en el canvas.
+         * Se determina el tamaño de la celda dinámicamente para llenar el 100% del contenedor.
          */
-        function addNewTable(initialSeats = Array(10).fill('')) {
-            const tableId = `table-${tableCounter + 1}`; // Use tableCounter + 1 for the ID
-            partyTables[tableId] = initialSeats;
+        function animateQrConstruction(pattern, ctx, canvas) {
+            clearTimeout(animationTimeoutId); 
 
-            let targetContainer;
-            if (tableCounter < 3) { // Tables 1, 2, 3
-                targetContainer = document.getElementById('row-1-tables');
-            } else if (tableCounter < 8) { // Tables 4, 5, 6, 7, 8
-                targetContainer = document.getElementById('row-2-tables');
-            } else if (tableCounter < 13) { // Tables 9, 10, 11, 12, 13
-                targetContainer = document.getElementById('row-3-tables');
-            } else if (tableCounter < 15) { // Tables 14, 15
-                targetContainer = document.getElementById('row-4-tables');
-            } else {
-                // For tables added beyond the initial 15
-                targetContainer = document.getElementById('additional-tables-row');
+            const qrSize = pattern.length;
+            
+            // Usamos el tamaño físico del canvas para dibujar (necesario para el dibujo)
+            // y lo ajustamos para que ocupe todo el contenedor.
+            const containerSize = canvas.parentElement.offsetWidth;
+            canvas.width = containerSize;
+            canvas.height = containerSize;
+
+            const CELL_SIZE = containerSize / qrSize; // Tamaño de celda dinámico
+
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fillRect(0, 0, containerSize, containerSize); // Pinta el fondo del QR de blanco
+
+            let currentModuleIndex = 0;
+            const totalModules = qrSize * qrSize;
+
+            function drawNextModule() {
+                if (currentModuleIndex >= totalModules) return;
+
+                const y = Math.floor(currentModuleIndex / qrSize);
+                const x = currentModuleIndex % qrSize;
+
+                const color = pattern[y][x] ? '#000000' : '#ffffff'; 
+                
+                ctx.fillStyle = color;
+                ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+                currentModuleIndex++;
+                animationTimeoutId = setTimeout(drawNextModule, ANIMATION_DELAY);
             }
 
-            const tableCard = document.createElement('div');
-            tableCard.id = tableId;
-            tableCard.className = 'table-card';
-            tableCard.innerHTML = `<span class="text-lg">Mesa ${tableCounter + 1}</span>`; // Display correct table number
-            tableCard.addEventListener('click', () => openSeatingModal(tableId));
-            targetContainer.appendChild(tableCard);
-
-            updateTableCardColor(tableId); // Update color immediately after adding
-            tableCounter++; // Increment counter after adding the table
+            drawNextModule(); 
         }
 
-        /**
-         * Clears all table containers in the DOM.
-         */
-        function clearAllTableContainers() {
-            document.getElementById('row-1-tables').innerHTML = '';
-            document.getElementById('row-2-tables').innerHTML = '';
-            document.getElementById('row-3-tables').innerHTML = '';
-            document.getElementById('row-4-tables').innerHTML = '';
-            document.getElementById('additional-tables-row').innerHTML = '';
-        }
+        /** Función principal: valida, cifra, y anima el QR. */
+        function generarCifradoYQR() {
+            const inputElement = document.getElementById("numeroOriginal");
+            const numStr = inputElement.value.trim();
+            const resultadoCifradoElement = document.getElementById("resultadoCifrado");
+            const qrCanvas = document.getElementById("qrCanvas");
+            const ctx = qrCanvas.getContext("2d");
 
-        /**
-         * Updates the background color of a table card based on whether it has any guests.
-         * @param {string} tableId - The ID of the table to update.
-         */
-        function updateTableCardColor(tableId) {
-            const tableCard = document.getElementById(tableId);
-            if (!tableCard) return;
-
-            const seats = partyTables[tableId];
-            const hasGuests = seats.some(seat => seat.trim() !== '');
-
-            if (hasGuests) {
-                tableCard.classList.add('filled');
-            } else {
-                tableCard.classList.remove('filled');
-            }
-        }
-
-        /**
-         * Updates the colors of all table cards.
-         */
-        function updateAllTableColors() {
-            for (const tableId in partyTables) {
-                updateTableCardColor(tableId);
-            }
-        }
-
-        /**
-         * Opens the seating modal for a specific table.
-         * @param {string} tableId - The ID of the table to edit.
-         */
-        function openSeatingModal(tableId) {
-            currentTableId = tableId;
-            const modal = document.getElementById('seating-modal');
-            const currentTableNameSpan = document.getElementById('current-table-name');
-
-            // Set table name in modal title
-            currentTableNameSpan.textContent = tableId.replace('table-', ''); // Display just the number
-
-            // Populate seat input fields according to the new logical order
-            for (let i = 0; i < 10; i++) {
-                // 'i' here represents the logical seat index (0 for Logical Seat 1, 1 for Logical Seat 2, etc.)
-                const physicalSeatWrapperIndex = logicalSeatOrderToPhysicalIndex[i];
-                const seatWrapper = document.getElementById(`seat-wrapper-${physicalSeatWrapperIndex}`);
-
-                // Clear previous content in case it was populated before
-                seatWrapper.innerHTML = '';
-
-                const label = document.createElement('label');
-                label.htmlFor = `seat-${i + 1}`; // Label displays the logical seat number (1-10)
-                label.textContent = `Asiento ${i + 1}`;
-                if (i === 0) { // The first logical seat is the new "start"
-                    label.innerHTML += ' <span class="text-green-600 text-xs">(Inicio)</span>';
-                }
-
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.id = `seat-${i + 1}`;
-                input.placeholder = 'Nombre';
-                // Input value is loaded from partyTables using the physical index
-                input.value = partyTables[tableId][physicalSeatWrapperIndex];
-
-                seatWrapper.appendChild(label);
-                seatWrapper.appendChild(input);
-
-                // Add event listener to update data on input change
-                // Value is saved in partyTables using the physical index
-                input.addEventListener('input', (event) => {
-                    partyTables[tableId][physicalSeatWrapperIndex] = event.target.value;
-                    updateTableCardColor(tableId); // Update table color when a seat is changed
-                });
-            }
-
-            modal.classList.add('active'); // Show modal
-        }
-
-        /**
-         * Closes the seating modal.
-         */
-        function closeSeatingModal() {
-            const modal = document.getElementById('seating-modal');
-            modal.classList.remove('active'); // Hide modal
-            currentTableId = null; // Reset current table
-        }
-
-        /**
-         * Displays a feedback message to the user.
-         * @param {string} message - The message to display.
-         * @param {string} type - 'success' or 'error'.
-         * @param {HTMLElement} element - The HTML element to display the message in.
-         */
-        function showFeedback(message, type, element) {
-            element.textContent = message;
-            element.classList.remove('hidden', 'text-green-600', 'text-red-600');
-            element.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
-            setTimeout(() => {
-                element.classList.add('hidden');
-            }, 3000);
-        }
-
-        /**
-         * Copies the content of the export output to the clipboard.
-         */
-        function copyExportOutput() {
-            const exportOutput = document.getElementById('export-output');
-            const feedbackElement = document.getElementById('copy-feedback');
-            if (exportOutput.textContent.trim() === '' || exportOutput.textContent.trim() === 'Haz clic en "Exportar Todas las Mesas" para ver el resultado aquí.') {
-                showFeedback('No hay datos para copiar.', 'error', feedbackElement);
+            if (numStr.length !== 8 || !/^\d{8}$/.test(numStr)) {
+                alert("Por favor, ingresa un número exacto de 8 dígitos.");
+                resultadoCifradoElement.textContent = "";
+                ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height); 
+                clearTimeout(animationTimeoutId);
                 return;
             }
 
-            // Use a temporary textarea to copy content
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = exportOutput.textContent;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            try {
-                document.execCommand('copy');
-                showFeedback('¡Copiado!', 'success', feedbackElement);
-            } catch (err) {
-                console.error('Error al copiar:', err);
-                showFeedback('Error al copiar. Intenta copiar manualmente.', 'error', feedbackElement);
-            } finally {
-                document.body.removeChild(tempTextArea);
-            }
-        }
+            const numeroCifrado = cifrarNumero(numStr);
+            resultadoCifradoElement.textContent = `Original: ${numStr} → Cifrado: ${numeroCifrado}`;
 
-        /**
-         * Exports the seating order for all tables, ensuring 150 elements with " " for empty seats.
-         */
-        function exportAllTablesSeating() {
-            const allSeats = [];
-            // Iterate through tables by their numerical order (Mesa 1, Mesa 2, etc.)
-            for (let i = 1; i <= tableCounter; i++) {
-                const tableId = `table-${i}`;
-                const seats = partyTables[tableId];
-                if (seats) {
-                    // Iterate over the logical order of seats for each table
-                    for (let j = 0; j < 10; j++) {
-                        const physicalIndex = logicalSeatOrderToPhysicalIndex[j];
-                        // If seat is empty or contains only whitespace, represent it as " "
-                        allSeats.push(seats[physicalIndex].trim() === '' ? ' ' : seats[physicalIndex].trim());
-                    }
-                } else {
-                    // If a table somehow doesn't exist in partyTables (shouldn't happen with current logic),
-                    // fill with 10 empty spaces to maintain 150 count.
-                    for (let j = 0; j < 10; j++) {
-                        allSeats.push(' ');
-                    }
-                }
-            }
-
-            const exportOutput = document.getElementById('export-output');
-            exportOutput.textContent = JSON.stringify(allSeats, null, 2); // Pretty print JSON
-
-            // Save to local storage
-            localStorage.setItem('partySeatingData', JSON.stringify(allSeats));
-        }
-
-        /**
-         * Imports seating data from the provided JSON string.
-         */
-        function importData() {
-            const importInput = document.getElementById('import-input');
-            const importFeedback = document.getElementById('import-feedback');
-            const jsonString = importInput.value.trim();
-
-            if (!jsonString) {
-                showFeedback('El campo de importación está vacío.', 'error', importFeedback);
-                return;
-            }
-
-            try {
-                const parsedData = JSON.parse(jsonString);
-
-                if (!Array.isArray(parsedData) || parsedData.length !== 150) {
-                    showFeedback('Formato de datos inválido. Se espera un array con 150 elementos.', 'error', importFeedback);
-                    return;
-                }
-
-                // Clear existing tables and data
-                partyTables = {}; // Reset the object
-                tableCounter = 0; // Reset counter
-                clearAllTableContainers(); // Clear DOM elements
-
-                // Re-create tables and populate with imported data
-                for (let i = 0; i < 15; i++) {
-                    const importedLogicalSeats = parsedData.slice(i * 10, (i * 10) + 10);
-                    const physicallyOrderedSeats = Array(10).fill(''); // Create empty array for physical order
-
-                    // Map logical order from imported data to physical order for partyTables
-                    for (let j = 0; j < 10; j++) {
-                        const physicalIndex = logicalSeatOrderToPhysicalIndex[j]; // Get the physical index for logical seat (j+1)
-                        physicallyOrderedSeats[physicalIndex] = importedLogicalSeats[j]; // Assign the guest from logical order to physical position
-                    }
-                    addNewTable(physicallyOrderedSeats); // Pass the physically ordered seats
-                }
-
-                showFeedback('Datos importados exitosamente.', 'success', importFeedback);
-                // Update the export output to reflect the newly imported data
-                exportAllTablesSeating();
-                updateAllTableColors(); // Update colors after import
-            } catch (e) {
-                console.error("Error al parsear JSON:", e);
-                showFeedback('Error al parsear los datos JSON. Asegúrate de que el formato sea correcto.', 'error', importFeedback);
-            }
-        }
-
-        /**
-         * Loads saved seating data from local storage on page load.
-         */
-        function loadSavedData() {
-            const savedData = localStorage.getItem('partySeatingData');
-            if (savedData) {
-                try {
-                    const parsedData = JSON.parse(savedData);
-                    if (Array.isArray(parsedData) && parsedData.length === 150) {
-                        // Clear existing tables and data
-                        partyTables = {};
-                        tableCounter = 0;
-                        clearAllTableContainers();
-
-                        // Re-create tables with loaded data
-                        for (let i = 0; i < 15; i++) {
-                            const loadedLogicalSeats = parsedData.slice(i * 10, (i * 10) + 10);
-                            const physicallyOrderedSeats = Array(10).fill('');
-                            for (let j = 0; j < 10; j++) {
-                                const physicalIndex = logicalSeatOrderToPhysicalIndex[j];
-                                physicallyOrderedSeats[physicalIndex] = loadedLogicalSeats[j];
-                            }
-                            addNewTable(physicallyOrderedSeats);
-                        }
-                        updateAllTableColors(); // Update colors after loading
-                        exportAllTablesSeating(); // Display loaded data in export output
-                    } else {
-                        console.warn("Datos guardados inválidos o incompletos. Se iniciará con mesas vacías.");
-                        initializeDefaultTables();
-                    }
-                } catch (e) {
-                    console.error("Error al cargar datos de local storage:", e);
-                    initializeDefaultTables();
-                }
-            } else {
-                initializeDefaultTables();
-            }
-        }
-
-        /**
-         * Initializes the default 15 empty tables.
-         */
-        function initializeDefaultTables() {
-            partyTables = {};
-            tableCounter = 0;
-            clearAllTableContainers();
-            for (let i = 0; i < 15; i++) {
-                addNewTable();
-            }
-        }
-
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize row containers in the DOM
-            const tablesContainerDiv = document.getElementById('tables-container');
-            const row1 = document.createElement('div'); row1.id = 'row-1-tables'; row1.className = 'table-row-container';
-            const row2 = document.createElement('div'); row2.id = 'row-2-tables'; row2.className = 'table-row-container extra-space-after';
-            const row3 = document.createElement('div'); row3.id = 'row-3-tables'; row3.className = 'table-row-container';
-            const row4 = document.createElement('div'); row4.id = 'row-4-tables'; row4.className = 'table-row-container';
-            const additionalRow = document.createElement('div'); additionalRow.id = 'additional-tables-row'; additionalRow.className = 'table-row-container';
-
-            tablesContainerDiv.appendChild(row1);
-            tablesContainerDiv.appendChild(row2);
-            tablesContainerDiv.appendChild(row3);
-            tablesContainerDiv.appendChild(row4);
-            tablesContainerDiv.appendChild(additionalRow); // For future added tables
-
-            // Load saved data or initialize default tables
-            loadSavedData();
-
-            document.getElementById('add-table-btn').addEventListener('click', addNewTable);
-            document.getElementById('close-modal-btn').addEventListener('click', closeSeatingModal);
-            document.getElementById('seating-modal').addEventListener('click', (event) => {
-                // Close modal if clicked outside modal-content
-                if (event.target.id === 'seating-modal') {
-                    closeSeatingModal();
-                }
+            // 1. Generar el patrón del QR (matriz de booleanos)
+            // Se usa un div dummy para obtener el patrón de la librería sin renderizar
+            const qr = new QRCode(document.createElement('div'), {
+                text: numeroCifrado,
+                width: 1, 
+                height: 1,
+                correctLevel: QRCode.CorrectLevel.L
             });
-            document.getElementById('export-all-tables-btn').addEventListener('click', exportAllTablesSeating);
-            document.getElementById('copy-export-btn').addEventListener('click', copyExportOutput);
-            document.getElementById('import-btn').addEventListener('click', importData);
-        });
+            const pattern = qr._oQRCode.modules;
+
+            // 2. Animar y dibujar el patrón en el canvas
+            animateQrConstruction(pattern, ctx, qrCanvas);
+        }
+
+        // Inicializar el canvas al cargar y reajustar al cambiar tamaño de ventana
+        function setupCanvas() {
+            const qrCanvas = document.getElementById("qrCanvas");
+            const containerSize = qrCanvas.parentElement.offsetWidth;
+            qrCanvas.width = containerSize;
+            qrCanvas.height = containerSize;
+            const ctx = qrCanvas.getContext("2d");
+            ctx.fillStyle = '#1e1e1e';
+            ctx.fillRect(0, 0, containerSize, containerSize);
+        }
+
+        window.onload = setupCanvas;
+        window.onresize = setupCanvas; // Vuelve a ajustar si el usuario rota el móvil o cambia el tamaño
     </script>
+
 </body>
 </html>
