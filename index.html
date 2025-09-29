@@ -3,221 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de QR Cifrado</title>
-    <!-- Carga Tailwind CSS para un diseño moderno y responsivo -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    <!-- Biblioteca qrcodejs para generar el código QR -->
+    <title>QR Cifrado Móvil</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
     <style>
-        /* Estilo base para centrar y asegurar que la ventana ocupe el 100% */
+        /* Estilos generales y Modo Oscuro */
         body {
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            background-color: #f7f9fb; /* Fondo claro */
+            align-items: center;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            transition: background-color 0.5s, color 0.5s;
+            margin: 0; /* Elimina márgenes por defecto del body */
+            width: 100vw; /* Asegura el ancho total de la pantalla */
         }
-        /* Oculta las vistas por defecto, solo la principal es visible al inicio */
-        .view {
-            display: none;
-            width: 100%;
-            flex-grow: 1; /* Permite que la vista ocupe el espacio restante */
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+            font-size: 1.5em; /* Tamaño de fuente amigable para móviles */
         }
-        #main-view {
+        #controls {
+            margin-bottom: 20px;
             display: flex;
+            flex-direction: column; /* Apila elementos verticalmente en móvil */
+            gap: 10px;
+            width: 90%; /* Ancho de los controles */
+            max-width: 400px;
         }
-        /* Estilos específicos para el contenedor del QR */
-        #contenedor-qr > canvas,
-        #contenedor-qr > img {
-            /* Forzar el elemento del QR a ocupar el 100% del contenedor padre */
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
+        input[type="text"] {
+            padding: 12px;
+            font-size: 1em;
+            text-align: center;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #f0f0f0;
+            border-radius: 8px; /* Bordes más suaves */
+        }
+        button {
+            padding: 12px 18px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #resultadoCifrado {
+            font-weight: bold;
+            margin: 15px 0;
+            color: #88ccff;
+            text-align: center;
+            padding: 0 10px;
+            font-size: 0.9em;
+        }
+
+        /* Contenedor del QR: ocupa el 75% del ancho de la pantalla */
+        #qr-canvas-container {
+            width: 75vw; /* 75% del ancho del viewport */
+            height: 75vw; /* Mantiene la proporción cuadrada */
+            max-width: 400px; /* Límite para pantallas grandes */
+            max-height: 400px;
+            
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid #555;
+            background-color: #000;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); 
+
+            /* Asegura que el canvas se estire para llenar el contenedor */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Estilo para el canvas dentro del contenedor */
+        #qrCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
     </style>
 </head>
 <body>
 
-    <!-- VISTA PRINCIPAL (Formulario de Ingreso) -->
-    <div id="main-view" class="view justify-center items-start pt-12 md:pt-24 px-4">
-        <div class="w-full max-w-md bg-white p-6 md:p-8 rounded-xl shadow-2xl">
-            <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Generador QR Cifrado</h1>
-            
-            <p class="text-gray-600 mb-4 text-center">Ingresa un número de 8 dígitos para cifrar:</p>
+    <h1>Generador QR Cifrado Animado</h1>
 
-            <input type="text" id="numeroOriginal" maxlength="8" placeholder="Ej: 25221231" required 
-                class="w-full p-3 mb-4 text-center border-2 border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 text-xl font-mono">
-            
-            <button onclick="generarCifradoYQR()" 
-                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transform transition duration-150 hover:scale-[1.02] active:scale-[0.98]">
-                Generar QR Cifrado
-            </button>
-            
-            <div id="messageBox" class="mt-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-lg text-sm hidden" role="alert">
-                <!-- Mensajes de validación aquí -->
-            </div>
-
-            <p id="resultadoCifrado" class="font-semibold text-center mt-4 text-gray-700 text-sm"></p>
-        </div>
+    <div id="controls">
+        <input type="text" id="numeroOriginal" maxlength="8" placeholder="Ingresa 8 dígitos (Ej: 25221231)" required>
+        <button onclick="generarCifradoYQR()">Generar QR Animado</button>
     </div>
 
-    <!-- VISTA DEL CÓDIGO QR GENERADO -->
-    <div id="qr-view" class="view flex flex-col justify-center items-center p-4">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Tu Código QR Cifrado</h2>
+    <p id="resultadoCifrado"></p>
 
-        <!-- Contenedor del QR: 3/4 de ancho en móviles (w-3/4) y un máximo de 480px en pantallas grandes -->
-        <div id="contenedor-qr-wrapper" class="w-3/4 max-w-sm md:max-w-md bg-white p-4 rounded-xl shadow-2xl flex justify-center items-center aspect-square">
-             <!-- El div donde qrcodejs insertará el canvas. Debe ser hijo directo del wrapper -->
-            <div id="contenedor-qr" class="w-full h-full"></div>
-        </div>
-
-        <p id="qrContentText" class="text-center mt-6 text-lg font-mono font-semibold text-indigo-600 bg-indigo-50 p-2 rounded-lg"></p>
-
-        <button onclick="volverAInicio()" 
-            class="mt-8 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transform transition duration-150 hover:scale-[1.02] active:scale-[0.98]">
-            ← Volver al Inicio
-        </button>
+    <div id="qr-canvas-container">
+        <canvas id="qrCanvas"></canvas>
     </div>
 
     <script>
-        // La clave de desplazamiento de 8 dígitos (91801021)
+        // Clave de desplazamiento y configuración de animación
         const CLAVE = [9, 1, 8, 0, 1, 0, 2, 1];
-        let qrcodeInstance = null; // Almacena la instancia del QR
+        const ANIMATION_DELAY = 5; // Retraso reducido para una animación más rápida en móvil
 
-        /**
-         * Cambia la vista activa de la aplicación.
-         * @param {string} viewId El ID de la vista a mostrar ('main-view' o 'qr-view').
-         */
-        function changeView(viewId) {
-            document.querySelectorAll('.view').forEach(view => {
-                view.style.display = 'none';
-            });
-            const activeView = document.getElementById(viewId);
-            if (activeView) {
-                activeView.style.display = 'flex';
-            }
-        }
+        let animationTimeoutId; 
 
-        /**
-         * Función para cifrar el número de 8 dígitos.
-         * Aplica la fórmula: (Dígito Original + Clave) mod 10
-         * @param {string} numero El número de 8 dígitos como cadena.
-         * @returns {string} El número cifrado.
-         */
+        /** Cifra el número usando el desplazamiento aditivo módulo 10. */
         function cifrarNumero(numero) {
             let numeroCifrado = "";
             for (let i = 0; i < 8; i++) {
                 const digitoOriginal = parseInt(numero[i]);
                 const claveDigito = CLAVE[i];
-                
-                // Aplica el cifrado aditivo módulo 10
                 const digitoCifrado = (digitoOriginal + claveDigito) % 10;
-                
                 numeroCifrado += digitoCifrado.toString();
             }
             return numeroCifrado;
         }
 
         /**
-         * Muestra un mensaje de error o notificación.
-         * @param {string} message El mensaje a mostrar.
-         * @param {boolean} isError Indica si es un error (rojo) o una notificación (verde).
+         * Anima la construcción del código QR módulo por módulo en el canvas.
+         * Se determina el tamaño de la celda dinámicamente para llenar el 100% del contenedor.
          */
-        function showMessage(message, isError = true) {
-            const box = document.getElementById("messageBox");
-            if (!message) {
-                box.classList.add('hidden');
-                return;
-            }
-            box.textContent = message;
-            box.classList.remove('hidden');
+        function animateQrConstruction(pattern, ctx, canvas) {
+            clearTimeout(animationTimeoutId); 
 
-            // Ajusta el color basado en si es error o no
-            if (isError) {
-                box.className = 'mt-4 p-3 border rounded-lg text-sm ' + 'bg-red-100 text-red-700 border-red-300';
-            } else {
-                box.className = 'mt-4 p-3 border rounded-lg text-sm ' + 'bg-green-100 text-green-700 border-green-300';
+            const qrSize = pattern.length;
+            
+            // Usamos el tamaño físico del canvas para dibujar (necesario para el dibujo)
+            // y lo ajustamos para que ocupe todo el contenedor.
+            const containerSize = canvas.parentElement.offsetWidth;
+            canvas.width = containerSize;
+            canvas.height = containerSize;
+
+            const CELL_SIZE = containerSize / qrSize; // Tamaño de celda dinámico
+
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fillRect(0, 0, containerSize, containerSize); // Pinta el fondo del QR de blanco
+
+            let currentModuleIndex = 0;
+            const totalModules = qrSize * qrSize;
+
+            function drawNextModule() {
+                if (currentModuleIndex >= totalModules) return;
+
+                const y = Math.floor(currentModuleIndex / qrSize);
+                const x = currentModuleIndex % qrSize;
+
+                const color = pattern[y][x] ? '#000000' : '#ffffff'; 
+                
+                ctx.fillStyle = color;
+                ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+                currentModuleIndex++;
+                animationTimeoutId = setTimeout(drawNextModule, ANIMATION_DELAY);
             }
+
+            drawNextModule(); 
         }
-        
-        /**
-         * Función principal que toma la entrada, cifra y genera el QR en la nueva vista.
-         */
+
+        /** Función principal: valida, cifra, y anima el QR. */
         function generarCifradoYQR() {
             const inputElement = document.getElementById("numeroOriginal");
             const numStr = inputElement.value.trim();
             const resultadoCifradoElement = document.getElementById("resultadoCifrado");
-            const qrDiv = document.getElementById("contenedor-qr");
+            const qrCanvas = document.getElementById("qrCanvas");
+            const ctx = qrCanvas.getContext("2d");
 
-            showMessage(null); // Limpiar mensajes anteriores
-
-            // 1. Validar la entrada
             if (numStr.length !== 8 || !/^\d{8}$/.test(numStr)) {
-                showMessage("Por favor, ingresa un número exacto de 8 dígitos.", true);
+                alert("Por favor, ingresa un número exacto de 8 dígitos.");
                 resultadoCifradoElement.textContent = "";
+                ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height); 
+                clearTimeout(animationTimeoutId);
                 return;
             }
 
-            // 2. Cifrar el número
             const numeroCifrado = cifrarNumero(numStr);
+            resultadoCifradoElement.textContent = `Original: ${numStr} → Cifrado: ${numeroCifrado}`;
 
-            // 3. Mostrar el resultado del cifrado en la vista principal (opcional, se mantiene)
-            resultadoCifradoElement.textContent = `Original: ${numStr}  →  Cifrado: ${numeroCifrado}`;
-
-            // 4. Generar el Código QR
-            // Borra el QR existente si lo hay
-            if (qrcodeInstance) {
-                qrDiv.innerHTML = "";
-                qrcodeInstance = null;
-            }
-            
-            // Determinar el tamaño del QR para forzar la regeneración del canvas
-            // Usamos un valor grande para que genere un canvas de alta resolución
-            // y luego el CSS lo escala al tamaño del contenedor (w-3/4).
-            const qrSize = 512; 
-
-            // Crea la nueva instancia de QRCode con el número CIFRADO
-            // Nota: qrcodejs crea un <canvas> o <img> dentro de qrDiv.
-            qrcodeInstance = new QRCode(qrDiv, {
-                text: numeroCifrado, // El contenido del QR es el número cifrado
-                width: qrSize,
-                height: qrSize,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.L 
+            // 1. Generar el patrón del QR (matriz de booleanos)
+            // Se usa un div dummy para obtener el patrón de la librería sin renderizar
+            const qr = new QRCode(document.createElement('div'), {
+                text: numeroCifrado,
+                width: 1, 
+                height: 1,
+                correctLevel: QRCode.CorrectLevel.L
             });
+            const pattern = qr._oQRCode.modules;
 
-            // 5. Actualizar el contenido del texto del QR y cambiar de vista
-            document.getElementById('qrContentText').textContent = `Contenido: ${numeroCifrado}`;
-            changeView('qr-view');
+            // 2. Animar y dibujar el patrón en el canvas
+            animateQrConstruction(pattern, ctx, qrCanvas);
         }
 
-        /**
-         * Vuelve a la vista de ingreso del número.
-         */
-        function volverAInicio() {
-            changeView('main-view');
-            // Opcionalmente, puedes limpiar el campo de entrada aquí si lo deseas
-            // document.getElementById("numeroOriginal").value = "";
+        // Inicializar el canvas al cargar y reajustar al cambiar tamaño de ventana
+        function setupCanvas() {
+            const qrCanvas = document.getElementById("qrCanvas");
+            const containerSize = qrCanvas.parentElement.offsetWidth;
+            qrCanvas.width = containerSize;
+            qrCanvas.height = containerSize;
+            const ctx = qrCanvas.getContext("2d");
+            ctx.fillStyle = '#1e1e1e';
+            ctx.fillRect(0, 0, containerSize, containerSize);
         }
 
-        // Inicializa la aplicación mostrando la vista principal al cargar
-        document.addEventListener('DOMContentLoaded', () => {
-            changeView('main-view');
-        });
+        window.onload = setupCanvas;
+        window.onresize = setupCanvas; // Vuelve a ajustar si el usuario rota el móvil o cambia el tamaño
     </script>
 
 </body>
